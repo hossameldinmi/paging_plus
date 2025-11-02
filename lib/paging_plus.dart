@@ -1,17 +1,35 @@
-/// A lightweight Dart library for handling file size conversions and formatting.
+/// A lightweight and intuitive Dart library for pagination management.
 ///
-/// This library provides the [SizedFile] class for easy file size manipulation
-/// across different units (bytes, KB, MB, GB, TB) with support for custom
-/// formatting and internationalization.
+/// This library provides the [Page] and [Paging] classes for easy pagination
+/// handling in Dart and Flutter applications. It supports calculating page
+/// information, determining the next page to fetch, and optimizing pagination
+/// requests to minimize redundant data fetching.
 ///
-/// Example usage:
+/// ## Features
+///
+/// * Calculate page information from item counts
+/// * Determine the next page to fetch intelligently
+/// * Optimize pagination to avoid redundant data fetching
+/// * Support for "load more" functionality
+/// * Built on Equatable for easy comparison
+///
+/// ## Usage
+///
 /// ```dart
 /// import 'package:paging_plus/paging_plus.dart';
 ///
 /// void main() {
-///   final fileSize = SizedFile.mb(5);
-///   print(fileSize.format()); // "5.00 MB"
-///   print(fileSize.inBytes);  // 5242880
+///   // Get the latest page info
+///   final page = Page.latestPage(25, 10);
+///   print('Page ${page.pageNumber}: ${page.count} items');
+///
+///   // Calculate next pagination request
+///   final paging = Paging.next(25, 10);
+///   print('Fetch page ${paging.pageNumber} with size ${paging.pageSize}');
+///
+///   // Generate all pages
+///   final pages = Page.getPages(25, 10);
+///   print('Total pages: ${pages.length}');
 /// }
 /// ```
 library paging_plus;
