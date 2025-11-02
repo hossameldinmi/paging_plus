@@ -43,39 +43,39 @@ void main() {
       expect(page.pageSize, 10);
     });
   });
-  group('getLatestPage', () {
+  group('Page.lastOf', () {
     test('empty Items', () {
       final expected = const Page(1, 0, 10);
-      final page = Page.latestPage(0, 10);
+      final page = Page.lastOf(0, 10);
       expect(page, expected);
     });
 
     test('half-fill Items', () {
       final expected = const Page(1, 5, 5);
-      final page = Page.latestPage(5, 10);
+      final page = Page.lastOf(5, 10);
       expect(page, expected);
     });
 
     test('Items == pageSize', () {
       final expected = const Page(1, 10, 0);
-      final page = Page.latestPage(10, 10);
+      final page = Page.lastOf(10, 10);
       expect(page, expected);
     });
 
     test('Items == 1.2 pageSize', () {
       final expected = const Page(2, 2, 8);
-      final page = Page.latestPage(12, 10);
+      final page = Page.lastOf(12, 10);
       expect(page, expected);
     });
     test('Items == 1.5 pageSize', () {
       final expected = const Page(2, 5, 5);
-      final page = Page.latestPage(15, 10);
+      final page = Page.lastOf(15, 10);
       expect(page, expected);
     });
 
     test('Items == 2 * pageSize', () {
       final expected = const Page(2, 10, 0);
-      final page = Page.latestPage(20, 10);
+      final page = Page.lastOf(20, 10);
       expect(page, expected);
     });
   });

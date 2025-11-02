@@ -38,7 +38,7 @@ class Paging extends Equatable {
   ///
   /// * [itemCount] - The current total number of items already fetched
   /// * [pageSize] - The desired number of items per page
-  /// * [fetchLastIfHasRemaining] - If true, always re-fetch the latest page
+  /// * [fetchLastIfHasRemaining] - If true, always re-fetch the last page
   ///   if it has remaining slots (default: true)
   /// * [minimumRemainingsToTake] - Minimum number of remaining slots required
   ///   before considering optimization (default: 0)
@@ -59,7 +59,7 @@ class Paging extends Equatable {
     if (itemCount == 0) {
       return Paging(1, pageSize);
     }
-    final latestPage = Page.latestPage(itemCount, pageSize);
+    final latestPage = Page.lastOf(itemCount, pageSize);
     if (latestPage.hasRemaining) {
       if (fetchLastIfHasRemaining || latestPage.count < minimumRemainingsToTake) {
         return Paging(latestPage.pageNumber, pageSize);
@@ -100,7 +100,7 @@ class Paging extends Equatable {
       return Paging(lastPage.pageNumber * pageSize ~/ gcd, gcd);
     } else {
       final newPageSize = remainings + 1;
-      final newLastPage = Page.latestPage(itemCount, newPageSize);
+      final newLastPage = Page.lastOf(itemCount, newPageSize);
       return _calcutaionOptimizedPagination(
         itemCount,
         newPageSize,

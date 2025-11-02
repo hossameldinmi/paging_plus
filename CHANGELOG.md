@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Page` class for representing a single page in a paginated dataset
   - Constructor: `Page(pageNumber, count, remainingsCount)`
   - Properties: `pageNumber`, `count`, `remainingsCount`, `hasRemaining`, `pageSize`, `currentTotalCount`, `expectedTotalCount`
-  - Factory method: `Page.latestPage(itemCount, pageSize)` - creates the latest page based on item count
+  - Factory method: `Page.lastOf(itemCount, pageSize)` - creates the last page based on item count
   - Static method: `Page.getPages(itemCount, pageSize)` - generates all pages for a dataset
 - `Paging` class for intelligent pagination request calculation
   - Constructor: `Paging(pageNumber, pageSize, shouldHasDuplicates)`

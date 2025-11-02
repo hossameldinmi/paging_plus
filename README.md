@@ -74,11 +74,11 @@ print('Page ${page.pageNumber} has ${page.count} items');
 print('Page size: ${page.pageSize}'); // 15
 print('Has remaining: ${page.hasRemaining}'); // true
 
-// Get the latest page based on item count
-final latestPage = Page.latestPage(25, 10);
-print('Latest page: ${latestPage.pageNumber}'); // 3
-print('Items in page: ${latestPage.count}'); // 5
-print('Remaining slots: ${latestPage.remainingsCount}'); // 5
+// Get the last page based on item count
+final lastPage = Page.lastOf(25, 10);
+print('Last page: ${lastPage.pageNumber}'); // 3
+print('Items in page: ${lastPage.count}'); // 5
+print('Remaining slots: ${lastPage.remainingsCount}'); // 5
 ```
 
 #### Generate All Pages
@@ -128,12 +128,12 @@ print('Fetch page ${paging3.pageNumber} with size ${paging3.pageSize}');
 The `Paging.next()` factory provides advanced options for optimization:
 
 ```dart
-// Basic usage - always refetch latest page if it has remaining slots
+// Basic usage - always refetch last page if it has remaining slots
 final basic = Paging.next(25, 10);
 print('Page: ${basic.pageNumber}, Size: ${basic.pageSize}');
 // Output: Page: 3, Size: 10
 
-// Don't refetch latest page if it has remaining slots
+// Don't refetch last page if it has remaining slots
 final optimized = Paging.next(
   25, 
   10,
@@ -362,12 +362,12 @@ const Page(int pageNumber, int count, int remainingsCount)
 
 #### Factory Methods
 
-##### `Page.latestPage(int itemCount, int pageSize)`
+##### `Page.lastOf(int itemCount, int pageSize)`
 
-Creates the latest page based on total item count.
+Creates the last page based on total item count.
 
 ```dart
-final page = Page.latestPage(25, 10);
+final page = Page.lastOf(25, 10);
 print(page.pageNumber); // 3
 print(page.count); // 5
 ```
@@ -417,7 +417,7 @@ Calculates the next page to fetch with optional optimization.
 **Parameters:**
 - `itemCount` - Current total number of items
 - `pageSize` - Desired items per page
-- `fetchLastIfHasRemaining` - Re-fetch latest page if it has remaining slots (default: true)
+- `fetchLastIfHasRemaining` - Re-fetch last page if it has remaining slots (default: true)
 - `minimumRemainingsToTake` - Minimum remaining slots before optimization (default: 0)
 
 **Returns:** A `Paging` object specifying the next page to fetch.
@@ -446,7 +446,7 @@ final paging = Paging.next(25, 10); // Default: refetch page 3
 ### Optimized Behavior
 
 ```dart
-// Don't refetch if latest page has remaining slots
+// Don't refetch if last page has remaining slots
 final paging = Paging.next(25, 10, false);
 // Result: Uses GCD algorithm to find optimal page size
 // This minimizes duplicate data while filling remaining slots
