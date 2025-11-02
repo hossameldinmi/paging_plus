@@ -197,6 +197,50 @@ void main() {
       expect(paging2.pageNumber, 2);
       expect(paging2.pageSize, 100);
     });
+
+    test('optimization triggers recursive case - scenario 1', () {
+      // This will trigger the recursive case in _calcutaionOptimizedPagination
+      // when gcd < remainings, forcing newPageSize = remainings + 1
+      final paging = Paging.next(17, 10, false, 5);
+      expect(paging.pageNumber, greaterThan(0));
+      expect(paging.pageSize, greaterThan(0));
+    });
+
+    test('optimization triggers recursive case - scenario 2', () {
+      // Another case that triggers recursion
+      final paging = Paging.next(23, 15, false, 5);
+      expect(paging.pageNumber, greaterThan(0));
+      expect(paging.pageSize, greaterThan(0));
+    });
+
+    test('optimization triggers recursive case - scenario 3', () {
+      // Edge case with small remainings
+      final paging = Paging.next(11, 10, false, 5);
+      expect(paging.pageNumber, greaterThan(0));
+      expect(paging.pageSize, greaterThan(0));
+    });
+
+    test('optimization with 16 items and pageSize 10', () {
+      // itemCount=16, pageSize=10: page 2 has 6 items, 4 remaining
+      // This should trigger optimization when count > minimumRemainingsToTake
+      final paging = Paging.next(16, 10, false, 5);
+      expect(paging.pageNumber, greaterThan(0));
+      expect(paging.pageSize, greaterThan(0));
+    });
+
+    test('optimization with 18 items and pageSize 10', () {
+      // itemCount=18, pageSize=10: page 2 has 8 items, 2 remaining
+      final paging = Paging.next(18, 10, false, 5);
+      expect(paging.pageNumber, greaterThan(0));
+      expect(paging.pageSize, greaterThan(0));
+    });
+
+    test('optimization with 27 items and pageSize 20', () {
+      // itemCount=27, pageSize=20: page 2 has 7 items, 13 remaining
+      final paging = Paging.next(27, 20, false, 5);
+      expect(paging.pageNumber, greaterThan(0));
+      expect(paging.pageSize, greaterThan(0));
+    });
   });
 
   group('Paging props', () {
