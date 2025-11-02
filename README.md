@@ -137,7 +137,7 @@ print('Page: ${basic.pageNumber}, Size: ${basic.pageSize}');
 final optimized = Paging.next(
   25, 
   10,
-  false, // fetchLatestIfHasRemaining
+  false, // fetchLastIfHasRemaining
 );
 print('Page: ${optimized.pageNumber}, Size: ${optimized.pageSize}');
 
@@ -145,9 +145,8 @@ print('Page: ${optimized.pageNumber}, Size: ${optimized.pageSize}');
 final advanced = Paging.next(
   25,
   10,
-  true,  // fetchLatestIfHasRemaining
+  true,  // fetchLastIfHasRemaining
   3,     // minimumRemainingsToTake - only refetch if >= 3 slots remaining
-  5,     // minimumToRequest - always request at least 5 items
 );
 ```
 
@@ -408,9 +407,8 @@ const Paging(int pageNumber, int pageSize, [bool shouldHasDuplicates = false])
 factory Paging.next(
   int itemCount, 
   int pageSize,
-  [bool fetchLatestIfHasRemaining = true, 
-   int minimumRemainingsToTake = 0, 
-   int minimumToRequest = 1]
+  [bool fetchLastIfHasRemaining = true, 
+   int minimumRemainingsToTake = 0]
 )
 ```
 
@@ -419,9 +417,8 @@ Calculates the next page to fetch with optional optimization.
 **Parameters:**
 - `itemCount` - Current total number of items
 - `pageSize` - Desired items per page
-- `fetchLatestIfHasRemaining` - Re-fetch latest page if it has remaining slots (default: true)
+- `fetchLastIfHasRemaining` - Re-fetch latest page if it has remaining slots (default: true)
 - `minimumRemainingsToTake` - Minimum remaining slots before optimization (default: 0)
-- `minimumToRequest` - Minimum items to request (default: 1)
 
 **Returns:** A `Paging` object specifying the next page to fetch.
 

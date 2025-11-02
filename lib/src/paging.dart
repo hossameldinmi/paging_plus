@@ -21,21 +21,14 @@ class Paging extends Equatable {
   /// The number of items to fetch per page.
   final int pageSize;
 
-  /// Whether the pagination strategy may result in duplicate items.
-  ///
-  /// This is set to true when the algorithm optimizes page size in a way
-  /// that might overlap with previously fetched data.
-  final bool shouldHasDuplicates;
-
   /// Creates a new [Paging] request.
   ///
   /// * [pageNumber] - The page number to fetch (1-indexed)
   /// * [pageSize] - The number of items per page
-  /// * [shouldHasDuplicates] - Whether duplicates may occur (default: false)
-  const Paging(this.pageNumber, this.pageSize, [this.shouldHasDuplicates = false]);
+  const Paging(this.pageNumber, this.pageSize);
 
   @override
-  List<Object> get props => [pageNumber, pageSize, shouldHasDuplicates];
+  List<Object> get props => [pageNumber, pageSize];
 
   @override
   bool get stringify => true;
@@ -48,12 +41,10 @@ class Paging extends Equatable {
   ///
   /// * [itemCount] - The current total number of items already fetched
   /// * [pageSize] - The desired number of items per page
-  /// * [fetchLatestIfHasRemaining] - If true, always re-fetch the latest page
+  /// * [fetchLastIfHasRemaining] - If true, always re-fetch the latest page
   ///   if it has remaining slots (default: true)
   /// * [minimumRemainingsToTake] - Minimum number of remaining slots required
   ///   before considering optimization (default: 0)
-  /// * [minimumToRequest] - Minimum number of items to request in optimized
-  ///   pagination (default: 1)
   ///
   /// Returns a [Paging] object specifying the next page to fetch.
   ///
@@ -67,20 +58,27 @@ class Paging extends Equatable {
   /// final optimized = Paging.next(50, 20, false);
   /// ```
   factory Paging.next(int itemCount, int pageSize,
-      [bool fetchLatestIfHasRemaining = true, int minimumRemainingsToTake = 0, int minimumToRequest = 1]) {
+      [bool fetchLastIfHasRemaining = true, int minimumRemainingsToTake = 0]) {
     if (itemCount == 0) {
       return Paging(1, pageSize);
     }
     final latestPage = Page.latestPage(itemCount, pageSize);
     if (latestPage.hasRemaining) {
-      if (fetchLatestIfHasRemaining || latestPage.count < minimumRemainingsToTake) {
+      if (fetchLastIfHasRemaining || latestPage.count < minimumRemainingsToTake) {
         return Paging(latestPage.pageNumber, pageSize);
       } else {
         return _calcutaionOptimizedPagination(
-            itemCount, pageSize, latestPage.remainingsCount, latestPage, minimumToRequest);
+          itemCount,
+          pageSize,
+          latestPage.remainingsCount,
+          latestPage,
+        );
       }
     }
-    return Paging(latestPage.pageNumber + 1, pageSize);
+    return Paging(
+      latestPage.pageNumber + 1,
+      pageSize,
+    );
   }
 
   /// Internal method that calculates an optimized pagination strategy.
@@ -92,16 +90,26 @@ class Paging extends Equatable {
   /// The algorithm recursively adjusts the page size to find the best fit
   /// that satisfies the minimum request requirements while avoiding unnecessary
   /// data transfer.
-  static Paging _calcutaionOptimizedPagination(int itemCount, int pageSize, int remainings, Page lastPage,
-      [int minimumToRequest = 1, bool willHaveDuplicates = false]) {
-    final gcd = lastPage.expectedTotalCount.gcd(remainings);
+  static Paging _calcutaionOptimizedPagination(
+    int itemCount,
+    int pageSize,
+    int remainings,
+    Page lastPage,
+  ) {
+    final expectedTotalCount = lastPage.currentTotalCount + lastPage.remainingsCount;
+    final gcd = expectedTotalCount.gcd(remainings);
     //todo:add minmum to request if (gcd >= remainings && gcd >= minimumToRequest) {
     if (gcd >= remainings) {
-      return Paging(lastPage.pageNumber * pageSize ~/ gcd, gcd, willHaveDuplicates);
+      return Paging(lastPage.pageNumber * pageSize ~/ gcd, gcd);
     } else {
       final newPageSize = remainings + 1;
       final newLastPage = Page.latestPage(itemCount, newPageSize);
-      return _calcutaionOptimizedPagination(itemCount, newPageSize, newPageSize, newLastPage, minimumToRequest, true);
+      return _calcutaionOptimizedPagination(
+        itemCount,
+        newPageSize,
+        newPageSize,
+        newLastPage,
+      );
     }
   }
 }

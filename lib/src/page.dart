@@ -32,9 +32,6 @@ class Page extends Equatable {
   /// The total number of items up to and including this page.
   int get currentTotalCount => ((pageNumber - 1) * pageSize) + count;
 
-  /// The expected total count if all remaining slots were filled.
-  int get expectedTotalCount => currentTotalCount + remainingsCount;
-
   /// Creates a new [Page] with the specified page number, item count, and remaining slots.
   ///
   /// * [pageNumber] - The page number (1-indexed)
