@@ -1,5 +1,5 @@
 name: paging_plus
-version: 0.0.1-alpha.1
+version: 1.0.0
 
 description: Lightweight and intuitive package for pagination and paging management.
   Easy-to-use utilities for handling page numbers, item counts, and load more

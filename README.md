@@ -42,7 +42,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  paging_plus: ^1.3.3
+  paging_plus: ^1.0.0
 ```
 
 Then run:
