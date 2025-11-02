@@ -30,9 +30,6 @@ class Paging extends Equatable {
   @override
   List<Object> get props => [pageNumber, pageSize];
 
-  @override
-  bool get stringify => true;
-
   /// Calculates the next page to fetch with optional optimization.
   ///
   /// This factory constructor intelligently determines the next pagination
@@ -111,5 +108,13 @@ class Paging extends Equatable {
         newLastPage,
       );
     }
+  }
+
+  @override
+  String toString() {
+    return {
+      'pageNumber': pageNumber,
+      'pageSize': pageSize,
+    }.toString();
   }
 }

@@ -103,5 +103,9 @@ class Page extends Equatable {
   }
 
   @override
-  bool get stringify => true;
+  String toString() => {
+        'pageNumber': pageNumber,
+        'count': count,
+        'remainingsCount': remainingsCount,
+      }.toString();
 }
