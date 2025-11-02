@@ -1,0 +1,25 @@
+name: paging_plus
+version: 0.0.1
+
+description: Lightweight and intuitive package for pagination and paging management.
+  Easy-to-use utilities for handling page numbers, item counts, and load more
+  functionality in Flutter and Dart applications.
+
+repository: https://github.com/hossameldinmi/paging_plus
+
+topics:
+  - page
+  - paging
+  - pagination
+  - flutter
+  - loadmore
+
+environment:
+  sdk: ">=2.12.0 <4.0.0"
+
+dependencies:
+  equatable: ^2.0.7
+
+
+dev_dependencies:
+  test: ^1.26.3

@@ -1,0 +1,11 @@
+name: paging_plus_example
+description: Example application for the paging_plus package
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ">=2.12.0 <4.0.0"
+
+dependencies:
+  paging_plus:
+    path: ../
