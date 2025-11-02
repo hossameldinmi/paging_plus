@@ -19,8 +19,8 @@
 /// import 'package:paging_plus/paging_plus.dart';
 ///
 /// void main() {
-///   // Get the latest page info
-///   final page = Page.latestPage(25, 10);
+///   // Get the last page info
+///   final page = Page.lastOf(25, 10);
 ///   print('Page ${page.pageNumber}: ${page.count} items');
 ///
 ///   // Calculate next pagination request

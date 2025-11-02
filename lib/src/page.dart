@@ -32,9 +32,6 @@ class Page extends Equatable {
   /// The total number of items up to and including this page.
   int get currentTotalCount => ((pageNumber - 1) * pageSize) + count;
 
-  /// The expected total count if all remaining slots were filled.
-  int get expectedTotalCount => currentTotalCount + remainingsCount;
-
   /// Creates a new [Page] with the specified page number, item count, and remaining slots.
   ///
   /// * [pageNumber] - The page number (1-indexed)
@@ -45,7 +42,7 @@ class Page extends Equatable {
   @override
   List<Object> get props => [pageNumber, count, remainingsCount];
 
-  /// Creates the latest (most recent) page based on the total item count and page size.
+  /// Creates the last page based on the total item count and page size.
   ///
   /// This factory constructor calculates which page the last item would be on
   /// and returns a [Page] representing that page with its current item count
@@ -57,19 +54,19 @@ class Page extends Equatable {
   /// Example:
   /// ```dart
   /// // With 25 items and page size of 10
-  /// final page = Page.latestPage(25, 10);
+  /// final page = Page.lastOf(25, 10);
   /// print(page.pageNumber); // 3
   /// print(page.count); // 5
   /// print(page.remainingsCount); // 5
   /// ```
-  factory Page.latestPage(int itemCount, int pageSize) {
+  factory Page.lastOf(int itemCount, int pageSize) {
     if (itemCount <= pageSize) {
       return Page(1, itemCount, pageSize - itemCount);
     }
     final pageNumber = (itemCount / pageSize).ceil();
     final remaining = itemCount % pageSize;
-    final latestPageItems = remaining == 0 ? pageSize : remaining;
-    return Page(pageNumber, latestPageItems, pageSize - latestPageItems);
+    final lastPageItems = remaining == 0 ? pageSize : remaining;
+    return Page(pageNumber, lastPageItems, pageSize - lastPageItems);
   }
 
   /// Generates a list of all pages needed to display the given number of items.
@@ -106,5 +103,9 @@ class Page extends Equatable {
   }
 
   @override
-  bool get stringify => true;
+  String toString() => {
+        'pageNumber': pageNumber,
+        'count': count,
+        'remainingsCount': remainingsCount,
+      }.toString();
 }

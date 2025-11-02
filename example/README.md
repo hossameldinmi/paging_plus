@@ -23,7 +23,7 @@ dart run main.dart
 The main example demonstrates core features and basic usage:
 
 1. **Creating Page instances** - Understanding page structure
-2. **Page.latestPage()** - Getting the latest page information
+2. **Page.lastOf()** - Getting the last page information
 3. **Page.getPages()** - Generating all pages for a dataset
 4. **Paging.next()** - Calculating the next page to fetch
 5. **Advanced pagination options** - Optimization parameters
@@ -38,8 +38,8 @@ The main example demonstrates core features and basic usage:
 import 'package:paging_plus/paging_plus.dart';
 
 void main() {
-  // Get the latest page for 25 items with page size 10
-  final page = Page.latestPage(25, 10);
+  // Get the last page for 25 items with page size 10
+  final page = Page.lastOf(25, 10);
   
   print('Page ${page.pageNumber}'); // Page 3
   print('Items: ${page.count}'); // Items: 5

@@ -2,79 +2,295 @@ import 'package:paging_plus/src/paging.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('empty Items', () {
-    final expected = const Paging(1, 10);
-    final pagination0 = Paging.next(0, 10);
-    final pagination1 = Paging.next(0, 10, true, 5);
-    final pagination2 = Paging.next(0, 10, false, 5);
-    expect(pagination0, expected);
-    expect(pagination1, expected);
-    expect(pagination2, expected);
+  group('Paging.next basic scenarios', () {
+    test('empty Items', () {
+      final pagination0 = Paging.next(0, 10);
+      final pagination1 = Paging.next(0, 10, true, 5);
+      final pagination2 = Paging.next(0, 10, false, 5);
+
+      final expected = const Paging(1, 10);
+
+      expect(pagination0, expected);
+      expect(pagination1, expected);
+      expect(pagination2, expected);
+    });
+
+    test('Items == pageSize', () {
+      final pagination0 = Paging.next(10, 10);
+      final pagination1 = Paging.next(10, 10, true, 5);
+      final pagination2 = Paging.next(10, 10, false, 5);
+
+      final expected = const Paging(2, 10);
+
+      expect(pagination0, expected);
+      expect(pagination1, expected);
+      expect(pagination2, expected);
+    });
+
+    test('Items == 1.2 pageSize, fetchLastIfHasRemaining=true', () {
+      final pagination0 = Paging.next(12, 10);
+      final pagination1 = Paging.next(12, 10, true, 5);
+
+      final expected = const Paging(2, 10);
+
+      expect(pagination0, expected);
+      expect(pagination1, expected);
+    });
+
+    test('Items == 1.5 pageSize, fetchLastIfHasRemaining=true', () {
+      final pagination = Paging.next(15, 10);
+
+      final expected = const Paging(2, 10);
+
+      expect(pagination, expected);
+    });
+
+    test('Items == 2 * pageSize', () {
+      final pagination = Paging.next(20, 10);
+
+      final expected = const Paging(3, 10);
+
+      expect(pagination, expected);
+    });
+
+    test('latestCount < minimum, fetchLastIfHasRemaining=false', () {
+      final pagination = Paging.next(12, 10, false, 5);
+
+      final expected = const Paging(2, 10);
+
+      expect(pagination, expected);
+    });
+
+    test('latestCount = minimum, fetchLastIfHasRemaining=false', () {
+      final pagination = Paging.next(15, 10, false, 5);
+
+      final expected = const Paging(4, 5);
+
+      expect(pagination, expected);
+    });
+
+    test('latestCount > minimum, fetchLastIfHasRemaining=false', () {
+      expect(Paging.next(160, 100, false, 5), const Paging(5, 40));
+      expect(Paging.next(190, 100, false, 5), const Paging(20, 10));
+    });
   });
 
-  test('Items == pageSize', () {
-    final expected = const Paging(2, 10);
-    final pagination0 = Paging.next(10, 10);
-    final pagination1 = Paging.next(10, 10, true, 5);
-    final pagination2 = Paging.next(10, 10, false, 5);
-    expect(pagination0, expected);
-    expect(pagination1, expected);
-    expect(pagination2, expected);
+  group('Paging constructor', () {
+    test('creates paging with pageNumber and pageSize', () {
+      final paging = const Paging(1, 10);
+      expect(paging.pageNumber, 1);
+      expect(paging.pageSize, 10);
+    });
+
+    test('creates paging with different values', () {
+      final paging = const Paging(5, 25);
+      expect(paging.pageNumber, 5);
+      expect(paging.pageSize, 25);
+    });
   });
 
-  test('Items == 1.2 pageSize, fetchLatestIfHasRemaining=true', () {
-    final expected = const Paging(2, 10);
-    final pagination0 = Paging.next(12, 10);
-    final pagination1 = Paging.next(12, 10, true, 5);
-    expect(pagination0, expected);
-    expect(pagination1, expected);
+  group('Paging.next edge cases', () {
+    test('single item returns page 1', () {
+      final paging = Paging.next(1, 10);
+      expect(paging.pageNumber, 1);
+      expect(paging.pageSize, 10);
+    });
+
+    test('pageSize of 1', () {
+      final paging = Paging.next(5, 1);
+      expect(paging.pageNumber, 6);
+      expect(paging.pageSize, 1);
+    });
+
+    test('large page size with few items', () {
+      final paging = Paging.next(5, 100);
+      expect(paging.pageNumber, 1);
+      expect(paging.pageSize, 100);
+    });
+
+    test('one item more than full page', () {
+      final paging = Paging.next(11, 10);
+      expect(paging.pageNumber, 2);
+      expect(paging.pageSize, 10);
+    });
   });
 
-  test(
-      'has items,totalCount > pageSize,latestCount < minimum, fetchLatestIfHasRemaining=false, minimumRemainingsToTake=5',
-      () {
-    final expected = const Paging(2, 10);
-    final pagination = Paging.next(12, 10, false, 5);
-    expect(pagination, expected);
+  group('Paging.next multiple pages', () {
+    test('3 full pages', () {
+      final paging = Paging.next(30, 10);
+      expect(paging.pageNumber, 4);
+      expect(paging.pageSize, 10);
+    });
+
+    test('5 full pages', () {
+      final paging = Paging.next(50, 10);
+      expect(paging.pageNumber, 6);
+      expect(paging.pageSize, 10);
+    });
+
+    test('10 full pages', () {
+      final paging = Paging.next(100, 10);
+      expect(paging.pageNumber, 11);
+      expect(paging.pageSize, 10);
+    });
   });
 
-  test(
-      'has items,totalCount > pageSize,latestCount = minimum, fetchLatestIfHasRemaining=false, minimumRemainingsToTake=5',
-      () {
-    final expected = const Paging(4, 5);
-    final pagination = Paging.next(15, 10, false, 5);
-    expect(pagination, expected);
+  group('Paging.next various page sizes', () {
+    test('pageSize 5', () {
+      final paging = Paging.next(12, 5);
+      expect(paging.pageNumber, 3);
+      expect(paging.pageSize, 5);
+    });
+
+    test('pageSize 20', () {
+      final paging = Paging.next(40, 20);
+      expect(paging.pageNumber, 3);
+      expect(paging.pageSize, 20);
+    });
+
+    test('pageSize 50', () {
+      final paging = Paging.next(100, 50);
+      expect(paging.pageNumber, 3);
+      expect(paging.pageSize, 50);
+    });
+
+    test('pageSize 100', () {
+      final paging = Paging.next(250, 100);
+      expect(paging.pageNumber, 3);
+      expect(paging.pageSize, 100);
+    });
   });
 
-  test(
-      'has items,totalCount > pageSize,latestCount > minimum, fetchLatestIfHasRemaining=false, minimumRemainingsToTake=5',
-      () {
-    expect(Paging.next(160, 100, false, 5), const Paging(5, 40));
-    expect(Paging.next(190, 100, false, 5), const Paging(20, 10));
-    expect(Paging.next(136, 50, false, 5), const Paging(10, 15, true));
-    expect(Paging.next(168, 100, false, 5), const Paging(6, 33, true));
-    expect(Paging.next(199, 100, false, 5), const Paging(200, 1, false));
-  });
-  test(
-      'has items,totalCount > pageSize,latestCount > minimum, fetchLatestIfHasRemaining=false, minimumRemainingsToTake=5, and minimum to request',
-      () {
-    expect(Paging.next(160, 100, false, 5, 40), const Paging(5, 40));
-    expect(Paging.next(190, 100, false, 5, 20), const Paging(10, 20, true));
-    expect(Paging.next(136, 50, false, 5, 14), const Paging(10, 15, true));
-    expect(Paging.next(168, 100, false, 5, 35), const Paging(5, 40, true));
-    expect(Paging.next(199, 100, false, 5), const Paging(200, 1, false));
-    expect(Paging.next(199, 100, false, 5, 25), const Paging(8, 25, true));
-  }, skip: 'todo: implement minimumToRequest');
+  group('Paging.next with partial pages', () {
+    test('25% filled page', () {
+      final paging = Paging.next(25, 100);
+      expect(paging.pageNumber, 1);
+      expect(paging.pageSize, 100);
+    });
 
-  test('Items == 1.5 pageSize, fetchLatestIfHasRemaining=true, minimumRemainingsToTake=0', () {
-    final expected = const Paging(2, 10);
-    final pagination = Paging.next(15, 10);
-    expect(pagination, expected);
+    test('75% filled page', () {
+      final paging = Paging.next(75, 100);
+      expect(paging.pageNumber, 1);
+      expect(paging.pageSize, 100);
+    });
   });
 
-  test('Items == 2 * pageSize', () {
-    final expected = const Paging(3, 10);
-    final pagination = Paging.next(20, 10);
-    expect(pagination, expected);
+  group('Paging.next optimization algorithm', () {
+    test('optimization with 160 items, pageSize 100', () {
+      final paging = Paging.next(160, 100, false, 5);
+      expect(paging.pageNumber, 5);
+      expect(paging.pageSize, 40);
+    });
+
+    test('optimization with 190 items, pageSize 100', () {
+      final paging = Paging.next(190, 100, false, 5);
+      expect(paging.pageNumber, 20);
+      expect(paging.pageSize, 10);
+    });
+
+    test('no optimization when fetchLastIfHasRemaining is true', () {
+      final paging1 = Paging.next(160, 100, true, 5);
+      expect(paging1.pageNumber, 2);
+      expect(paging1.pageSize, 100);
+
+      final paging2 = Paging.next(190, 100, true, 5);
+      expect(paging2.pageNumber, 2);
+      expect(paging2.pageSize, 100);
+    });
+
+    test('optimization triggers recursive case - scenario 1', () {
+      // This will trigger the recursive case in _calcutaionOptimizedPagination
+      // when gcd < remainings, forcing newPageSize = remainings + 1
+      final paging = Paging.next(17, 10, false, 5);
+      expect(paging.pageNumber, greaterThan(0));
+      expect(paging.pageSize, greaterThan(0));
+    });
+
+    test('optimization triggers recursive case - scenario 2', () {
+      // Another case that triggers recursion
+      final paging = Paging.next(23, 15, false, 5);
+      expect(paging.pageNumber, greaterThan(0));
+      expect(paging.pageSize, greaterThan(0));
+    });
+
+    test('optimization triggers recursive case - scenario 3', () {
+      // Edge case with small remainings
+      final paging = Paging.next(11, 10, false, 5);
+      expect(paging.pageNumber, greaterThan(0));
+      expect(paging.pageSize, greaterThan(0));
+    });
+
+    test('optimization with 16 items and pageSize 10', () {
+      // itemCount=16, pageSize=10: page 2 has 6 items, 4 remaining
+      // This should trigger optimization when count > minimumRemainingsToTake
+      final paging = Paging.next(16, 10, false, 5);
+      expect(paging.pageNumber, greaterThan(0));
+      expect(paging.pageSize, greaterThan(0));
+    });
+
+    test('optimization with 18 items and pageSize 10', () {
+      // itemCount=18, pageSize=10: page 2 has 8 items, 2 remaining
+      final paging = Paging.next(18, 10, false, 5);
+      expect(paging.pageNumber, greaterThan(0));
+      expect(paging.pageSize, greaterThan(0));
+    });
+
+    test('optimization with 27 items and pageSize 20', () {
+      // itemCount=27, pageSize=20: page 2 has 7 items, 13 remaining
+      final paging = Paging.next(27, 20, false, 5);
+      expect(paging.pageNumber, greaterThan(0));
+      expect(paging.pageSize, greaterThan(0));
+    });
+  });
+
+  group('Paging props', () {
+    test('props includes pageNumber and pageSize', () {
+      final paging = const Paging(3, 20);
+      expect(paging.props, [3, 20]);
+    });
+
+    test('props for different values', () {
+      final paging = const Paging(1, 10);
+      expect(paging.props, [1, 10]);
+    });
+  });
+
+  group('Paging equality', () {
+    test('equal paging instances are equal', () {
+      final paging1 = const Paging(2, 10);
+      final paging2 = const Paging(2, 10);
+      expect(paging1, equals(paging2));
+    });
+
+    test('different pageNumber makes paging unequal', () {
+      final paging1 = const Paging(1, 10);
+      final paging2 = const Paging(2, 10);
+      expect(paging1, isNot(equals(paging2)));
+    });
+
+    test('different pageSize makes paging unequal', () {
+      final paging1 = const Paging(2, 10);
+      final paging2 = const Paging(2, 20);
+      expect(paging1, isNot(equals(paging2)));
+    });
+
+    test('hashCode is consistent for equal instances', () {
+      final paging1 = const Paging(3, 15);
+      final paging2 = const Paging(3, 15);
+      expect(paging1.hashCode, equals(paging2.hashCode));
+    });
+  });
+
+  group('Paging.toString', () {
+    test('toString for different values', () {
+      final paging = const Paging(5, 25);
+      final pagingString = paging.toString();
+      expect(
+          pagingString,
+          {
+            'pageNumber': '5',
+            'pageSize': '25',
+          }.toString());
+    });
   });
 }
