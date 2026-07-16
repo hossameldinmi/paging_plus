@@ -26,9 +26,8 @@ The main example demonstrates core features and basic usage:
 2. **Page.lastOf()** - Getting the last page information
 3. **Page.getPages()** - Generating all pages for a dataset
 4. **Paging.next()** - Calculating the next page to fetch
-5. **Advanced pagination options** - Optimization parameters
-6. **Infinite scroll pattern** - Load more implementation
-7. **Real-world scenarios** - Practical pagination examples
+5. **Optimized fetching** - Minimizing duplicate downloads
+6. **Load-more loop** - Fetching until the server runs out of items
 
 ## Quick Examples
 
@@ -40,10 +39,10 @@ import 'package:paging_plus/paging_plus.dart';
 void main() {
   // Get the last page for 25 items with page size 10
   final page = Page.lastOf(25, 10);
-  
+
   print('Page ${page.pageNumber}'); // Page 3
   print('Items: ${page.count}'); // Items: 5
-  print('Remaining: ${page.remainingsCount}'); // Remaining: 5
+  print('Remaining: ${page.remainingCount}'); // Remaining: 5
   print('Has remaining: ${page.hasRemaining}'); // true
 }
 ```
@@ -57,9 +56,13 @@ void main() {
   // Calculate next page to fetch
   // Current: 50 items, page size: 20
   final paging = Paging.next(50, 20);
-  
+
   print('Fetch page ${paging.pageNumber}'); // Fetch page 3
   print('Page size: ${paging.pageSize}'); // Page size: 20
+
+  // Avoid re-downloading the partial last page:
+  final optimized = Paging.next(50, 20, refetchPartialLastPage: false);
+  print(optimized); // Paging(pageNumber: 6, pageSize: 10)
 }
 ```
 
@@ -72,21 +75,21 @@ class DataController {
   List<Item> items = [];
   final int pageSize = 20;
   bool isLoading = false;
-  
+
   Future<void> loadMore() async {
     if (isLoading) return;
-    
+
     isLoading = true;
-    
+
     // Calculate next page
     final paging = Paging.next(items.length, pageSize);
-    
+
     // Fetch data
     final newItems = await fetchItems(
       page: paging.pageNumber,
       pageSize: paging.pageSize,
     );
-    
+
     items.addAll(newItems);
     isLoading = false;
   }

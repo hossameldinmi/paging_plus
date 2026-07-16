@@ -3,8 +3,8 @@
 </h2>
 
 <p align="center">
-   <a href="https://github.com/hossameldinmi/paging_plus/actions/workflows/dart.yml">
-    <img src="https://github.com/hossameldinmi/paging_plus/actions/workflows/dart.yml/badge.svg?branch=main" alt="Github action">
+   <a href="https://github.com/balsm-health/paging_plus/actions/workflows/dart.yml">
+    <img src="https://github.com/balsm-health/paging_plus/actions/workflows/dart.yml/badge.svg?branch=main" alt="Github action">
   </a>
   <a href="https://codecov.io/github/hossameldinmi/paging_plus">
     <img src="https://codecov.io/github/hossameldinmi/paging_plus/graph/badge.svg?token=JzTIIzoQOq" alt="Code Coverage">
@@ -31,10 +31,9 @@ A lightweight and intuitive Dart package for pagination and paging management. E
 - 🔄 **Smart Pagination**: Intelligently determine the next page to fetch
 - ⚡ **Optimization**: Minimize redundant data fetching with optimized pagination
 - 📊 **Load More**: Built-in support for "load more" functionality
-- 🎯 **Type Safe**: Built with strong typing and null safety
+- 🎯 **Type Safe**: Built with strong typing, null safety, and input validation
 - 🧪 **Well Tested**: Comprehensive test coverage
-- 🔗 **Equatable**: Built on Equatable for easy comparison
-- ⚡ **Lightweight**: Minimal dependencies, pure Dart implementation
+- ⚡ **Lightweight**: Zero dependencies, pure Dart implementation
 
 ## Installation
 
@@ -42,7 +41,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  paging_plus: ^1.0.0
+  paging_plus: ^2.0.0
 ```
 
 Then run:
@@ -78,7 +77,7 @@ print('Has remaining: ${page.hasRemaining}'); // true
 final lastPage = Page.lastOf(25, 10);
 print('Last page: ${lastPage.pageNumber}'); // 3
 print('Items in page: ${lastPage.count}'); // 5
-print('Remaining slots: ${lastPage.remainingsCount}'); // 5
+print('Remaining slots: ${lastPage.remainingCount}'); // 5
 ```
 
 #### Generate All Pages
@@ -112,7 +111,8 @@ final paging1 = Paging.next(0, 20);
 print('Fetch page ${paging1.pageNumber} with size ${paging1.pageSize}');
 // Output: Fetch page 1 with size 20
 
-// If you have 50 items with page size 20, fetch page 3
+// If you have 50 items with page size 20, the last page is partially
+// filled, so it is re-fetched by default
 final paging2 = Paging.next(50, 20);
 print('Fetch page ${paging2.pageNumber} with size ${paging2.pageSize}');
 // Output: Fetch page 3 with size 20
@@ -125,29 +125,38 @@ print('Fetch page ${paging3.pageNumber} with size ${paging3.pageSize}');
 
 ### Advanced Pagination Options
 
-The `Paging.next()` factory provides advanced options for optimization:
+`Paging.next()` accepts named parameters that control how a partially filled
+last page is handled:
 
 ```dart
-// Basic usage - always refetch last page if it has remaining slots
+// Default behavior: re-fetch the partial last page with the original size.
+// With 25 items and page size 10 the request is page 3 of size 10,
+// which downloads 5 duplicates alongside the 5 new items.
 final basic = Paging.next(25, 10);
-print('Page: ${basic.pageNumber}, Size: ${basic.pageSize}');
-// Output: Page: 3, Size: 10
+print(basic); // Paging(pageNumber: 3, pageSize: 10)
 
-// Don't refetch last page if it has remaining slots
-final optimized = Paging.next(
-  25, 
-  10,
-  false, // fetchLastIfHasRemaining
-);
-print('Page: ${optimized.pageNumber}, Size: ${optimized.pageSize}');
+// Optimized: pick a page size whose window starts exactly at item 25.
+final optimized = Paging.next(25, 10, refetchPartialLastPage: false);
+print(optimized); // Paging(pageNumber: 6, pageSize: 5) - zero duplicates
 
-// Advanced: Set minimum remainings threshold and minimum request size
-final advanced = Paging.next(
+// Only optimize when the last page already holds at least 5 items;
+// below that threshold, re-fetching the last page is cheap anyway.
+final guarded = Paging.next(
   25,
   10,
-  true,  // fetchLastIfHasRemaining
-  3,     // minimumRemainingsToTake - only refetch if >= 3 slots remaining
+  refetchPartialLastPage: false,
+  minCountToOptimize: 5,
 );
+
+// Control how small the optimizer may make the page size
+// (defaults to half of pageSize):
+final bounded = Paging.next(
+  199,
+  100,
+  refetchPartialLastPage: false,
+  minPageSize: 50,
+);
+print(bounded); // Paging(pageNumber: 3, pageSize: 99) - only 1 duplicate
 ```
 
 ### Practical Examples
@@ -159,27 +168,27 @@ class DataController {
   List<Item> items = [];
   final int pageSize = 20;
   bool isLoading = false;
-  
+
   Future<void> loadMore() async {
     if (isLoading) return;
-    
+
     isLoading = true;
-    
+
     // Calculate what page to fetch next
     final paging = Paging.next(items.length, pageSize);
-    
+
     print('Fetching page ${paging.pageNumber}...');
-    
+
     // Fetch the data
     final newItems = await fetchItems(
       page: paging.pageNumber,
       pageSize: paging.pageSize,
     );
-    
+
     items.addAll(newItems);
     isLoading = false;
   }
-  
+
   Future<List<Item>> fetchItems({
     required int page,
     required int pageSize,
@@ -200,11 +209,11 @@ class PaginationInfo {
   final int totalItems;
   final bool hasNextPage;
   final bool hasPreviousPage;
-  
+
   factory PaginationInfo.fromItemCount(int totalItems, int pageSize) {
     final pages = Page.getPages(totalItems, pageSize);
     final latestPage = pages.isNotEmpty ? pages.last : Page(1, 0, pageSize);
-    
+
     return PaginationInfo(
       currentPage: latestPage.pageNumber,
       totalPages: pages.length,
@@ -214,7 +223,7 @@ class PaginationInfo {
       hasPreviousPage: latestPage.pageNumber > 1,
     );
   }
-  
+
   PaginationInfo({
     required this.currentPage,
     required this.totalPages,
@@ -237,7 +246,7 @@ class ApiClient {
   }) async {
     // Calculate next page
     final paging = Paging.next(currentItemCount, pageSize);
-    
+
     // Make API call
     final response = await http.get(
       Uri.parse('https://api.example.com/items')
@@ -246,12 +255,12 @@ class ApiClient {
         'pageSize': paging.pageSize.toString(),
       }),
     );
-    
+
     final data = jsonDecode(response.body);
     final items = (data['items'] as List)
         .map((json) => fromJson(json))
         .toList();
-    
+
     return PaginatedResponse(
       items: items,
       page: paging.pageNumber,
@@ -266,7 +275,7 @@ class PaginatedResponse<T> {
   final int page;
   final int pageSize;
   final bool hasMore;
-  
+
   PaginatedResponse({
     required this.items,
     required this.page,
@@ -289,31 +298,31 @@ class _ItemListViewState extends State<ItemListView> {
   final int pageSize = 20;
   bool isLoading = false;
   bool hasMore = true;
-  
+
   @override
   void initState() {
     super.initState();
     loadMore();
   }
-  
+
   Future<void> loadMore() async {
     if (isLoading || !hasMore) return;
-    
+
     setState(() => isLoading = true);
-    
+
     final paging = Paging.next(items.length, pageSize);
     final newItems = await fetchItems(
       page: paging.pageNumber,
       pageSize: paging.pageSize,
     );
-    
+
     setState(() {
       items.addAll(newItems);
       isLoading = false;
       hasMore = newItems.length == pageSize;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
@@ -328,7 +337,7 @@ class _ItemListViewState extends State<ItemListView> {
       },
     );
   }
-  
+
   Future<List<Item>> fetchItems({required int page, required int pageSize}) async {
     // Your API call
     return [];
@@ -345,7 +354,7 @@ Represents a single page in a paginated dataset.
 #### Constructor
 
 ```dart
-const Page(int pageNumber, int count, int remainingsCount)
+const Page(int pageNumber, int count, int remainingCount)
 ```
 
 #### Properties
@@ -354,17 +363,17 @@ const Page(int pageNumber, int count, int remainingsCount)
 |----------|------|-------------|
 | `pageNumber` | `int` | The current page number (1-indexed) |
 | `count` | `int` | Number of items in this page |
-| `remainingsCount` | `int` | Number of remaining slots in this page |
+| `remainingCount` | `int` | Number of remaining slots in this page |
 | `hasRemaining` | `bool` | Whether this page has remaining slots |
 | `pageSize` | `int` | Total page size (count + remaining) |
 | `currentTotalCount` | `int` | Total items up to this page |
-| `expectedTotalCount` | `int` | Expected total if remaining slots filled |
 
 #### Factory Methods
 
 ##### `Page.lastOf(int itemCount, int pageSize)`
 
-Creates the last page based on total item count.
+Creates the last page based on total item count. Throws an `ArgumentError`
+if `itemCount` is negative or `pageSize` is less than 1.
 
 ```dart
 final page = Page.lastOf(25, 10);
@@ -374,7 +383,8 @@ print(page.count); // 5
 
 ##### `Page.getPages(int itemCount, int pageSize)`
 
-Generates a list of all pages for the dataset.
+Generates a list of all pages for the dataset. Throws an `ArgumentError`
+if `itemCount` is negative or `pageSize` is less than 1.
 
 ```dart
 final pages = Page.getPages(25, 10);
@@ -388,7 +398,7 @@ Represents a pagination request with optimized page size calculation.
 #### Constructor
 
 ```dart
-const Paging(int pageNumber, int pageSize, [bool shouldHasDuplicates = false])
+const Paging(int pageNumber, int pageSize)
 ```
 
 #### Properties
@@ -397,7 +407,6 @@ const Paging(int pageNumber, int pageSize, [bool shouldHasDuplicates = false])
 |----------|------|-------------|
 | `pageNumber` | `int` | Page number to fetch (1-indexed) |
 | `pageSize` | `int` | Number of items per page |
-| `shouldHasDuplicates` | `bool` | Whether duplicates may occur |
 
 #### Factory Methods
 
@@ -405,34 +414,46 @@ const Paging(int pageNumber, int pageSize, [bool shouldHasDuplicates = false])
 
 ```dart
 factory Paging.next(
-  int itemCount, 
-  int pageSize,
-  [bool fetchLastIfHasRemaining = true, 
-   int minimumRemainingsToTake = 0]
-)
+  int itemCount,
+  int pageSize, {
+  bool refetchPartialLastPage = true,
+  int minCountToOptimize = 0,
+  int? minPageSize,
+})
 ```
 
 Calculates the next page to fetch with optional optimization.
 
 **Parameters:**
-- `itemCount` - Current total number of items
+- `itemCount` - Current total number of items already fetched
 - `pageSize` - Desired items per page
-- `fetchLastIfHasRemaining` - Re-fetch last page if it has remaining slots (default: true)
-- `minimumRemainingsToTake` - Minimum remaining slots before optimization (default: 0)
+- `refetchPartialLastPage` - If true (default), a partially filled last page is re-fetched with the original `pageSize`
+- `minCountToOptimize` - Only optimize when the last page already holds at least this many items (default: 0)
+- `minPageSize` - Smallest page size the optimizer may pick, between 1 and `pageSize` (default: half of `pageSize`)
 
-**Returns:** A `Paging` object specifying the next page to fetch.
+**Returns:** A `Paging` object specifying the next page to fetch. The result
+never skips items (`(pageNumber - 1) * pageSize <= itemCount`) and always
+reaches past the items already fetched (`pageNumber * pageSize > itemCount`).
+
+**Throws:** `ArgumentError` if any argument is out of range.
 
 ```dart
 // Simple usage
 final paging = Paging.next(50, 20);
 
 // With optimization
-final optimized = Paging.next(50, 20, false, 5, 10);
+final optimized = Paging.next(
+  50,
+  20,
+  refetchPartialLastPage: false,
+  minCountToOptimize: 5,
+);
 ```
 
 ## Understanding Pagination Optimization
 
-The `Paging.next()` method includes an optimization algorithm that can reduce redundant data fetching:
+`Paging.next()` includes an optimization that can reduce redundant data
+fetching when the last page is partially filled:
 
 ### Standard Behavior (default)
 
@@ -446,16 +467,23 @@ final paging = Paging.next(25, 10); // Default: refetch page 3
 ### Optimized Behavior
 
 ```dart
-// Don't refetch if last page has remaining slots
-final paging = Paging.next(25, 10, false);
-// Result: Uses GCD algorithm to find optimal page size
-// This minimizes duplicate data while filling remaining slots
+// Don't refetch the partial last page as-is
+final paging = Paging.next(25, 10, refetchPartialLastPage: false);
+// Result: page 6, size 5 - the window starts exactly at item 25,
+// so the request contains zero duplicates
 ```
 
-The optimization uses the Greatest Common Divisor (GCD) algorithm to calculate an efficient page size that:
-- Minimizes duplicate data fetching
-- Respects minimum request size requirements
-- Fills remaining page slots efficiently
+The optimizer searches page sizes from `pageSize` down to `minPageSize` and
+picks the one whose fetch window starts closest to `itemCount`, preferring
+the largest size on ties:
+
+- When a size in that range divides `itemCount` evenly, the request contains
+  **no duplicates at all** (e.g. 160 items with page size 100 becomes page 3
+  of size 80).
+- Otherwise it minimizes the overlap (e.g. 199 items with page size 100
+  becomes page 3 of size 99 - a single duplicate).
+- `minPageSize` (default: half of `pageSize`) keeps the result from
+  degenerating into tiny requests.
 
 ## Testing
 
@@ -466,8 +494,9 @@ The package includes comprehensive unit tests covering:
 - Page list generation
 - Next page calculation
 - Pagination optimization
+- Input validation
 - Edge cases and boundary conditions
-- Equatable implementation
+- Equality and hashCode behavior
 
 Run tests with:
 
@@ -511,7 +540,7 @@ If you encounter any issues or have questions:
 
 1. Check the [API Reference](#api-reference) section
 2. Look at the [examples](#practical-examples)
-3. Open an issue on [GitHub](https://github.com/hossameldinmi/paging_plus/issues)
+3. Open an issue on [GitHub](https://github.com/balsm-health/paging_plus/issues)
 
 ---
 

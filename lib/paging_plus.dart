@@ -32,7 +32,7 @@
 ///   print('Total pages: ${pages.length}');
 /// }
 /// ```
-library paging_plus;
+library;
 
 export 'src/page.dart';
 export 'src/paging.dart';
