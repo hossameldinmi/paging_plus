@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-07-14
+
+### Fixed
+- `Page.getPages` no longer hangs forever when called with a `pageSize` of 0
+  (and no longer grows the list unboundedly for negative page sizes) — it now
+  throws an `ArgumentError`
+- `Page.lastOf` and `Paging.next` no longer crash with an obscure
+  `Unsupported operation` error for a `pageSize` of 0, and no longer return
+  nonsensical pages for negative item counts — they now throw an `ArgumentError`
+- The pagination optimizer can no longer degenerate into pathological requests
+  such as `Paging(200, 1)` (one item per request); the optimized page size is
+  bounded below by the new `minPageSize` parameter, which defaults to half of
+  `pageSize`
+- The optimizer now finds strictly better results: it picks the largest page
+  size in `[minPageSize, pageSize]` whose fetch window starts closest to the
+  items already fetched, producing zero duplicates whenever a divisor of
+  `itemCount` is in range (e.g. 160 items / page size 100 now yields page 3 of
+  size 80 instead of page 5 of size 40)
+
+### Changed
+- **BREAKING**: `Paging.next` optional parameters are now named:
+  `Paging.next(itemCount, pageSize, refetchPartialLastPage: ..., minCountToOptimize: ..., minPageSize: ...)`
+- **BREAKING**: Renamed `fetchLastIfHasRemaining` to `refetchPartialLastPage`
+  and `minimumRemainingsToTake` to `minCountToOptimize` — the old name and its
+  documentation contradicted the actual behavior (the threshold compares
+  against the last page's item count, not its remaining slots)
+- **BREAKING**: Renamed `Page.remainingsCount` to `Page.remainingCount`
+- **BREAKING**: `Page` and `Paging` constructors now assert their arguments
+  are in range (page numbers >= 1, counts >= 0, page sizes >= 1)
+- **BREAKING**: Removed the `equatable` dependency; `Page` and `Paging`
+  implement `==`/`hashCode` directly (the `props` getter is gone) — the
+  package now has zero runtime dependencies
+- `toString()` now returns `Page(pageNumber: 1, count: 10, remainingCount: 5)`
+  style output instead of a map literal
+- Minimum SDK raised to Dart 3.6
+- Enabled the `lints/recommended` lint set
+
+### Added
+- `example/main.dart` — a runnable example (the README previously pointed to a
+  file that did not exist)
+- Contract tests sweeping thousands of input combinations to guarantee
+  `Paging.next` never skips items and always requests at least one new item
+
 ## [1.0.0] - 2025-11-03
 
 ### Added
@@ -64,6 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ⚡ Lightweight with minimal dependencies
 - 🧪 Test coverage for core functionality
 
-[1.0.0]: https://github.com/hossameldinmi/paging_plus/releases/tag/v1.0.0
-[0.0.1-alpha.1]: https://github.com/hossameldinmi/paging_plus/releases/tag/v0.0.1-alpha.1
+[2.0.0]: https://github.com/balsm-health/paging_plus/releases/tag/v2.0.0
+[1.0.0]: https://github.com/balsm-health/paging_plus/releases/tag/v1.0.0
+[0.0.1-alpha.1]: https://github.com/balsm-health/paging_plus/releases/tag/v0.0.1-alpha.1
 
