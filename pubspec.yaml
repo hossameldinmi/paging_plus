@@ -3,7 +3,7 @@ version: 2.0.0
 
 description: Lightweight pagination package. Calculate pages, determine next page to fetch, and handle load-more with optimized data fetching for Flutter & Dart.
 
-repository: https://github.com/hossameldinmi/paging_plus
+repository: https://github.com/balsm-health/paging_plus
 
 topics:
   - page
